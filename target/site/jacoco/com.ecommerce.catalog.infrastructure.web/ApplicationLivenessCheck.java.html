@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicationLivenessCheck.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">item-detail-api</a> &gt; <a href="index.source.html" class="el_package">com.ecommerce.catalog.infrastructure.web</a> &gt; <span class="el_source">ApplicationLivenessCheck.java</span></div><h1>ApplicationLivenessCheck.java</h1><pre class="source lang-java linenums">package com.ecommerce.catalog.infrastructure.web;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
+import org.eclipse.microprofile.health.Liveness;
+
+import java.time.LocalDateTime;
+
+@Liveness
+@ApplicationScoped
+<span class="fc" id="L12">public class ApplicationLivenessCheck implements HealthCheck {</span>
+
+    @Override
+    public HealthCheckResponse call() {
+<span class="fc" id="L16">        return HealthCheckResponse.named(&quot;product-catalog-liveness&quot;)</span>
+<span class="fc" id="L17">                .status(true)</span>
+<span class="fc" id="L18">                .withData(&quot;timestamp&quot;, LocalDateTime.now().toString())</span>
+<span class="fc" id="L19">                .withData(&quot;service&quot;, &quot;product-catalog-api&quot;)</span>
+<span class="fc" id="L20">                .build();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

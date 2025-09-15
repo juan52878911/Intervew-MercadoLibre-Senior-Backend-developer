@@ -1,0 +1,8 @@
+com/ecommerce/catalog/application/service/ProductServiceTest.class
+com/ecommerce/catalog/domain/exception/ProductNotFoundExceptionMapperTest.class
+com/ecommerce/catalog/infrastructure/web/ProductControllerTest.class
+com/ecommerce/catalog/application/dto/ProductJsonParsingTest.class
+com/ecommerce/catalog/domain/exception/DuplicatedProductExceptionMapperTest.class
+com/ecommerce/catalog/domain/exception/InvalidProductDataExceptionMapperTest.class
+com/ecommerce/catalog/infrastructure/web/ApplicationLivenessCheckTest.class
+com/ecommerce/catalog/infrastructure/persistance/JsonProductRepositoryTest.class

@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JsonProductRepository.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">item-detail-api</a> &gt; <a href="index.source.html" class="el_package">com.ecommerce.catalog.infrastructure.persistance</a> &gt; <span class="el_source">JsonProductRepository.java</span></div><h1>JsonProductRepository.java</h1><pre class="source lang-java linenums">package com.ecommerce.catalog.infrastructure.persistance;
+
+import com.ecommerce.catalog.application.dto.ProductDto;
+import com.ecommerce.catalog.application.dto.ProductsContainerDto;
+import com.ecommerce.catalog.domain.repository.ProductRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.Option;
+import com.jayway.jsonpath.TypeRef;
+import jakarta.enterprise.context.ApplicationScoped;
+import lombok.extern.slf4j.Slf4j;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+/**
+ * Implementación corregida del repositorio JSON
+ * Maneja correctamente la deserialización y concurrencia
+ */
+@ApplicationScoped
+<span class="fc" id="L31">@Slf4j</span>
+public class JsonProductRepository implements ProductRepository {
+
+    private final List&lt;ProductDto&gt; products;
+<span class="fc" id="L35">    private final ReadWriteLock lock = new ReentrantReadWriteLock();</span>
+
+<span class="fc" id="L37">    public JsonProductRepository() {</span>
+        // Configurar ObjectMapper para manejar snake_case del JSON
+<span class="fc" id="L39">        ObjectMapper objectMapper = new ObjectMapper();</span>
+<span class="fc" id="L40">        objectMapper.registerModule(new JavaTimeModule());</span>
+<span class="fc" id="L41">        objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);</span>
+
+        try {
+            // Cargar JSON al inicializar
+<span class="fc" id="L45">            InputStream inputStream = getClass().getClassLoader()</span>
+<span class="fc" id="L46">                    .getResourceAsStream(&quot;data/products.json&quot;);</span>
+
+<span class="pc bpc" id="L48" title="1 of 2 branches missed.">            if (inputStream == null) {</span>
+<span class="nc" id="L49">                throw new RuntimeException(&quot;No se pudo encontrar el archivo products.json&quot;);</span>
+            }
+
+<span class="fc" id="L52">            String jsonString = new String(inputStream.readAllBytes());</span>
+
+            // Configurar JsonPath
+<span class="fc" id="L55">            Configuration config = Configuration.defaultConfiguration()</span>
+<span class="fc" id="L56">                    .addOptions(Option.DEFAULT_PATH_LEAF_TO_NULL)</span>
+<span class="fc" id="L57">                    .addOptions(Option.SUPPRESS_EXCEPTIONS);</span>
+
+<span class="fc" id="L59">            DocumentContext jsonContext = JsonPath.using(config).parse(jsonString);</span>
+
+            // Deserializar correctamente usando TypeRef para preservar tipos
+<span class="fc" id="L62">            ProductsContainerDto container = objectMapper.readValue(jsonString, ProductsContainerDto.class);</span>
+<span class="fc" id="L63">            this.products = container.getProducts();</span>
+
+<span class="fc" id="L65">            log.info(&quot;✅ Repositorio JSON inicializado con {} productos&quot;, products.size());</span>
+
+<span class="nc" id="L67">        } catch (IOException e) {</span>
+<span class="nc" id="L68">            throw new RuntimeException(&quot;Error al cargar productos del JSON&quot;, e);</span>
+<span class="fc" id="L69">        }</span>
+<span class="fc" id="L70">    }</span>
+
+    @Override
+    public Optional&lt;ProductDto&gt; findById(String id) {
+<span class="fc" id="L74">        lock.readLock().lock();</span>
+        try {
+<span class="fc" id="L76">            log.debug(&quot;🔍 Buscando producto por ID: {}&quot;, id);</span>
+
+            // Usar stream de la lista en memoria (más confiable)
+<span class="fc" id="L79">            Optional&lt;ProductDto&gt; result = products.stream()</span>
+<span class="fc" id="L80">                    .filter(product -&gt; id.equals(product.getId()))</span>
+<span class="fc" id="L81">                    .findFirst();</span>
+
+<span class="fc bfc" id="L83" title="All 2 branches covered.">            if (result.isPresent()) {</span>
+<span class="fc" id="L84">                log.debug(&quot;✅ Producto encontrado: {} - {}&quot;, result.get().getId(), result.get().getTitle());</span>
+            } else {
+<span class="fc" id="L86">                log.debug(&quot;❌ Producto no encontrado: {}&quot;, id);</span>
+            }
+
+<span class="fc" id="L89">            return result;</span>
+
+        } finally {
+<span class="fc" id="L92">            lock.readLock().unlock();</span>
+        }
+    }
+
+    @Override
+    public List&lt;ProductDto&gt; findAll() {
+<span class="nc" id="L98">        lock.readLock().lock();</span>
+        try {
+<span class="nc" id="L100">            log.debug(&quot;📋 Obteniendo todos los productos&quot;);</span>
+<span class="nc" id="L101">            return List.copyOf(products);</span>
+        } finally {
+<span class="nc" id="L103">            lock.readLock().unlock();</span>
+        }
+    }
+
+    @Override
+    public List&lt;ProductDto&gt; findByTitleContaining(String title) {
+<span class="fc" id="L109">        lock.readLock().lock();</span>
+        try {
+<span class="fc" id="L111">            log.debug(&quot;🔍 Buscando productos que contengan en título: '{}'&quot;, title);</span>
+
+<span class="fc" id="L113">            List&lt;ProductDto&gt; results = products.stream()</span>
+<span class="pc bpc" id="L114" title="1 of 2 branches missed.">                    .filter(product -&gt; product.getTitle() != null &amp;&amp;</span>
+<span class="fc bfc" id="L115" title="All 2 branches covered.">                            product.getTitle().toLowerCase().contains(title.toLowerCase()))</span>
+<span class="fc" id="L116">                    .collect(Collectors.toList());</span>
+
+<span class="fc" id="L118">            log.debug(&quot;✅ Encontrados {} productos con título que contiene: '{}'&quot;, results.size(), title);</span>
+<span class="fc" id="L119">            return results;</span>
+
+        } finally {
+<span class="fc" id="L122">            lock.readLock().unlock();</span>
+        }
+    }
+
+    @Override
+    public List&lt;ProductDto&gt; findByBrand(String brand) {
+<span class="fc" id="L128">        lock.readLock().lock();</span>
+        try {
+<span class="fc" id="L130">            log.debug(&quot;🔍 Buscando productos de marca: '{}'&quot;, brand);</span>
+
+<span class="fc" id="L132">            List&lt;ProductDto&gt; results = products.stream()</span>
+<span class="pc bpc" id="L133" title="1 of 2 branches missed.">                    .filter(product -&gt; product.getAttributes() != null &amp;&amp;</span>
+<span class="fc" id="L134">                            product.getAttributes().stream()</span>
+<span class="fc bfc" id="L135" title="All 4 branches covered.">                                    .anyMatch(attr -&gt; &quot;BRAND&quot;.equals(attr.getId()) &amp;&amp;</span>
+<span class="fc bfc" id="L136" title="All 2 branches covered.">                                            brand.equalsIgnoreCase(attr.getValueName())))</span>
+<span class="fc" id="L137">                    .collect(Collectors.toList());</span>
+
+<span class="fc" id="L139">            log.debug(&quot;✅ Encontrados {} productos de marca: '{}'&quot;, results.size(), brand);</span>
+<span class="fc" id="L140">            return results;</span>
+
+        } finally {
+<span class="fc" id="L143">            lock.readLock().unlock();</span>
+        }
+    }
+
+    @Override
+    public List&lt;ProductDto&gt; findByPriceRange(BigDecimal minPrice, BigDecimal maxPrice) {
+<span class="fc" id="L149">        lock.readLock().lock();</span>
+        try {
+<span class="fc" id="L151">            log.debug(&quot;🔍 Buscando productos en rango de precio: {} - {}&quot;, minPrice, maxPrice);</span>
+
+<span class="fc" id="L153">            List&lt;ProductDto&gt; results = products.stream()</span>
+<span class="pc bpc" id="L154" title="1 of 2 branches missed.">                    .filter(product -&gt; product.getPrice() != null &amp;&amp;</span>
+<span class="fc bfc" id="L155" title="All 2 branches covered.">                            product.getPrice().compareTo(minPrice) &gt;= 0 &amp;&amp;</span>
+<span class="fc bfc" id="L156" title="All 2 branches covered.">                            product.getPrice().compareTo(maxPrice) &lt;= 0)</span>
+<span class="fc" id="L157">                    .collect(Collectors.toList());</span>
+
+<span class="fc" id="L159">            log.debug(&quot;✅ Encontrados {} productos en rango de precio: {} - {}&quot;,</span>
+<span class="fc" id="L160">                    results.size(), minPrice, maxPrice);</span>
+<span class="fc" id="L161">            return results;</span>
+
+        } finally {
+<span class="fc" id="L164">            lock.readLock().unlock();</span>
+        }
+    }
+
+    @Override
+    public List&lt;ProductDto&gt; findByCondition(String condition) {
+<span class="fc" id="L170">        lock.readLock().lock();</span>
+        try {
+<span class="fc" id="L172">            log.debug(&quot;🔍 Buscando productos con condición: '{}'&quot;, condition);</span>
+
+<span class="fc" id="L174">            List&lt;ProductDto&gt; results = products.stream()</span>
+<span class="fc" id="L175">                    .filter(product -&gt; condition.equalsIgnoreCase(product.getCondition()))</span>
+<span class="fc" id="L176">                    .collect(Collectors.toList());</span>
+
+<span class="fc" id="L178">            log.debug(&quot;✅ Encontrados {} productos con condición: '{}'&quot;, results.size(), condition);</span>
+<span class="fc" id="L179">            return results;</span>
+
+        } finally {
+<span class="fc" id="L182">            lock.readLock().unlock();</span>
+        }
+    }
+
+    @Override
+    public List&lt;ProductDto&gt; findByStatus(String status) {
+<span class="fc" id="L188">        lock.readLock().lock();</span>
+        try {
+<span class="fc" id="L190">            log.debug(&quot;🔍 Buscando productos con estado: '{}'&quot;, status);</span>
+
+<span class="fc" id="L192">            List&lt;ProductDto&gt; results = products.stream()</span>
+<span class="fc" id="L193">                    .filter(product -&gt; status.equalsIgnoreCase(product.getStatus()))</span>
+<span class="fc" id="L194">                    .collect(Collectors.toList());</span>
+
+<span class="fc" id="L196">            log.debug(&quot;✅ Encontrados {} productos con estado: '{}'&quot;, results.size(), status);</span>
+<span class="fc" id="L197">            return results;</span>
+
+        } finally {
+<span class="fc" id="L200">            lock.readLock().unlock();</span>
+        }
+    }
+
+    @Override
+    public List&lt;ProductDto&gt; findByCurrency(String currencyId) {
+<span class="fc" id="L206">        lock.readLock().lock();</span>
+        try {
+<span class="fc" id="L208">            log.debug(&quot;🔍 Buscando productos con moneda: '{}'&quot;, currencyId);</span>
+
+<span class="fc" id="L210">            List&lt;ProductDto&gt; results = products.stream()</span>
+<span class="fc" id="L211">                    .filter(product -&gt; currencyId.equalsIgnoreCase(product.getCurrencyId()))</span>
+<span class="fc" id="L212">                    .collect(Collectors.toList());</span>
+
+<span class="fc" id="L214">            log.debug(&quot;✅ Encontrados {} productos con moneda: '{}'&quot;, results.size(), currencyId);</span>
+<span class="fc" id="L215">            return results;</span>
+
+        } finally {
+<span class="fc" id="L218">            lock.readLock().unlock();</span>
+        }
+    }
+
+    @Override
+    public List&lt;ProductDto&gt; findWithVariations() {
+<span class="fc" id="L224">        lock.readLock().lock();</span>
+        try {
+<span class="fc" id="L226">            log.debug(&quot;🔍 Buscando productos que tienen variaciones&quot;);</span>
+
+<span class="fc" id="L228">            List&lt;ProductDto&gt; results = products.stream()</span>
+<span class="pc bpc" id="L229" title="1 of 2 branches missed.">                    .filter(product -&gt; product.getVariations() != null &amp;&amp;</span>
+<span class="pc bpc" id="L230" title="1 of 2 branches missed.">                            !product.getVariations().isEmpty())</span>
+<span class="fc" id="L231">                    .collect(Collectors.toList());</span>
+
+<span class="fc" id="L233">            log.debug(&quot;✅ Encontrados {} productos con variaciones&quot;, results.size());</span>
+<span class="fc" id="L234">            return results;</span>
+
+        } finally {
+<span class="fc" id="L237">            lock.readLock().unlock();</span>
+        }
+    }
+
+    @Override
+    public List&lt;ProductDto&gt; searchAdvanced(String query, String brand, BigDecimal minPrice,
+                                           BigDecimal maxPrice, String condition) {
+<span class="fc" id="L244">        lock.readLock().lock();</span>
+        try {
+<span class="fc" id="L246">            log.debug(&quot;🔍 Búsqueda avanzada - Query: '{}', Marca: '{}', Precio: {}-{}, Condición: '{}'&quot;,</span>
+                    query, brand, minPrice, maxPrice, condition);
+
+<span class="fc" id="L249">            List&lt;ProductDto&gt; results = products.stream()</span>
+<span class="fc" id="L250">                    .filter(product -&gt; {</span>
+                        // Filtro por query en título
+<span class="pc bpc" id="L252" title="1 of 4 branches missed.">                        if (query != null &amp;&amp; !query.isBlank()) {</span>
+<span class="pc bpc" id="L253" title="1 of 2 branches missed.">                            if (product.getTitle() == null ||</span>
+<span class="fc bfc" id="L254" title="All 2 branches covered.">                                    !product.getTitle().toLowerCase().contains(query.toLowerCase())) {</span>
+<span class="fc" id="L255">                                return false;</span>
+                            }
+                        }
+
+                        // Filtro por marca
+<span class="pc bpc" id="L260" title="1 of 4 branches missed.">                        if (brand != null &amp;&amp; !brand.isBlank()) {</span>
+<span class="pc bpc" id="L261" title="1 of 2 branches missed.">                            if (product.getAttributes() == null) return false;</span>
+<span class="fc" id="L262">                            boolean hasBrand = product.getAttributes().stream()</span>
+<span class="fc bfc" id="L263" title="All 2 branches covered.">                                    .anyMatch(attr -&gt; &quot;BRAND&quot;.equals(attr.getId()) &amp;&amp;</span>
+<span class="fc bfc" id="L264" title="All 2 branches covered.">                                            brand.equalsIgnoreCase(attr.getValueName()));</span>
+<span class="fc bfc" id="L265" title="All 2 branches covered.">                            if (!hasBrand) return false;</span>
+                        }
+
+                        // Filtro por rango de precio
+<span class="pc bpc" id="L269" title="1 of 4 branches missed.">                        if (minPrice != null &amp;&amp; (product.getPrice() == null ||</span>
+<span class="fc bfc" id="L270" title="All 2 branches covered.">                                product.getPrice().compareTo(minPrice) &lt; 0)) {</span>
+<span class="fc" id="L271">                            return false;</span>
+                        }
+<span class="pc bpc" id="L273" title="1 of 4 branches missed.">                        if (maxPrice != null &amp;&amp; (product.getPrice() == null ||</span>
+<span class="fc bfc" id="L274" title="All 2 branches covered.">                                product.getPrice().compareTo(maxPrice) &gt; 0)) {</span>
+<span class="fc" id="L275">                            return false;</span>
+                        }
+
+                        // Filtro por condición
+<span class="pc bpc" id="L279" title="1 of 4 branches missed.">                        if (condition != null &amp;&amp; !condition.isBlank()) {</span>
+<span class="pc bpc" id="L280" title="1 of 2 branches missed.">                            if (!condition.equalsIgnoreCase(product.getCondition())) {</span>
+<span class="nc" id="L281">                                return false;</span>
+                            }
+                        }
+
+<span class="fc" id="L285">                        return true;</span>
+                    })
+<span class="fc" id="L287">                    .collect(Collectors.toList());</span>
+
+<span class="fc" id="L289">            log.debug(&quot;✅ Búsqueda avanzada completada. Encontrados {} productos&quot;, results.size());</span>
+<span class="fc" id="L290">            return results;</span>
+
+        } finally {
+<span class="fc" id="L293">            lock.readLock().unlock();</span>
+        }
+    }
+
+    @Override
+    public long count() {
+<span class="fc" id="L299">        lock.readLock().lock();</span>
+        try {
+<span class="fc" id="L301">            return products.size();</span>
+        } finally {
+<span class="fc" id="L303">            lock.readLock().unlock();</span>
+        }
+    }
+
+    @Override
+    public long countByBrand(String brand) {
+<span class="nc" id="L309">        lock.readLock().lock();</span>
+        try {
+<span class="nc" id="L311">            return findByBrand(brand).size();</span>
+        } finally {
+<span class="nc" id="L313">            lock.readLock().unlock();</span>
+        }
+    }
+
+    @Override
+    public List&lt;String&gt; findAllBrands() {
+<span class="fc" id="L319">        lock.readLock().lock();</span>
+        try {
+<span class="fc" id="L321">            log.debug(&quot;🔍 Obteniendo todas las marcas disponibles&quot;);</span>
+
+<span class="fc" id="L323">            List&lt;String&gt; brands = products.stream()</span>
+<span class="pc bpc" id="L324" title="1 of 2 branches missed.">                    .filter(product -&gt; product.getAttributes() != null)</span>
+<span class="fc" id="L325">                    .flatMap(product -&gt; product.getAttributes().stream())</span>
+<span class="pc bpc" id="L326" title="1 of 4 branches missed.">                    .filter(attr -&gt; &quot;BRAND&quot;.equals(attr.getId()) &amp;&amp; attr.getValueName() != null)</span>
+<span class="fc" id="L327">                    .map(attr -&gt; attr.getValueName())</span>
+<span class="fc" id="L328">                    .distinct()</span>
+<span class="fc" id="L329">                    .sorted()</span>
+<span class="fc" id="L330">                    .collect(Collectors.toList());</span>
+
+<span class="fc" id="L332">            log.debug(&quot;✅ Encontradas {} marcas únicas&quot;, brands.size());</span>
+<span class="fc" id="L333">            return brands;</span>
+
+        } finally {
+<span class="fc" id="L336">            lock.readLock().unlock();</span>
+        }
+    }
+
+    @Override
+    public List&lt;String&gt; findAllCategories() {
+<span class="fc" id="L342">        lock.readLock().lock();</span>
+        try {
+<span class="fc" id="L344">            log.debug(&quot;🔍 Obteniendo todas las categorías disponibles&quot;);</span>
+
+<span class="fc" id="L346">            List&lt;String&gt; categories = products.stream()</span>
+<span class="pc bpc" id="L347" title="1 of 2 branches missed.">                    .filter(product -&gt; product.getAttributes() != null)</span>
+<span class="fc" id="L348">                    .flatMap(product -&gt; product.getAttributes().stream())</span>
+<span class="fc bfc" id="L349" title="All 2 branches covered.">                    .filter(attr -&gt; (&quot;FOOTWEAR_TYPE&quot;.equals(attr.getId()) ||</span>
+<span class="fc bfc" id="L350" title="All 2 branches covered.">                            &quot;CLOTHING_TYPE&quot;.equals(attr.getId()) ||</span>
+<span class="fc bfc" id="L351" title="All 2 branches covered.">                            &quot;MODEL&quot;.equals(attr.getId())) &amp;&amp;</span>
+<span class="pc bpc" id="L352" title="1 of 2 branches missed.">                            attr.getValueName() != null)</span>
+<span class="fc" id="L353">                    .map(attr -&gt; attr.getValueName())</span>
+<span class="fc" id="L354">                    .distinct()</span>
+<span class="fc" id="L355">                    .sorted()</span>
+<span class="fc" id="L356">                    .collect(Collectors.toList());</span>
+
+<span class="fc" id="L358">            log.debug(&quot;✅ Encontradas {} categorías únicas&quot;, categories.size());</span>
+<span class="fc" id="L359">            return categories;</span>
+
+        } finally {
+<span class="fc" id="L362">            lock.readLock().unlock();</span>
+        }
+    }
+
+    // Métodos para debugging
+    public void printStatistics() {
+<span class="fc" id="L368">        lock.readLock().lock();</span>
+        try {
+<span class="fc" id="L370">            log.info(&quot;📊 ESTADÍSTICAS DEL REPOSITORIO JSON:&quot;);</span>
+<span class="fc" id="L371">            log.info(&quot;═══════════════════════════════════════&quot;);</span>
+<span class="fc" id="L372">            log.info(&quot;Total productos: {}&quot;, count());</span>
+<span class="fc" id="L373">            log.info(&quot;Productos activos: {}&quot;, findByStatus(&quot;active&quot;).size());</span>
+<span class="fc" id="L374">            log.info(&quot;Productos nuevos: {}&quot;, findByCondition(&quot;new&quot;).size());</span>
+<span class="fc" id="L375">            log.info(&quot;Productos con variaciones: {}&quot;, findWithVariations().size());</span>
+<span class="fc" id="L376">            log.info(&quot;Marcas disponibles: {}&quot;, String.join(&quot;, &quot;, findAllBrands()));</span>
+<span class="fc" id="L377">            log.info(&quot;Categorías disponibles: {}&quot;, String.join(&quot;, &quot;, findAllCategories()));</span>
+        } finally {
+<span class="fc" id="L379">            lock.readLock().unlock();</span>
+        }
+<span class="fc" id="L381">    }</span>
+
+    // Método para obtener productos raw (para debugging)
+    public List&lt;ProductDto&gt; getRawProducts() {
+<span class="fc" id="L385">        return List.copyOf(products);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

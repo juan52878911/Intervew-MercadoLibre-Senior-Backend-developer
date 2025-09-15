@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DuplicatedProductExceptionMapper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">item-detail-api</a> &gt; <a href="index.source.html" class="el_package">com.ecommerce.catalog.application.exception</a> &gt; <span class="el_source">DuplicatedProductExceptionMapper.java</span></div><h1>DuplicatedProductExceptionMapper.java</h1><pre class="source lang-java linenums">package com.ecommerce.catalog.application.exception;
+
+import com.ecommerce.catalog.domain.exception.InvalidProductDataException;
+import com.ecommerce.catalog.infrastructure.web.dto.request.CauseResponseDto;
+import com.ecommerce.catalog.infrastructure.web.dto.request.ErrorResponseDto;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
+
+import java.util.List;
+
+@Provider
+<span class="fc" id="L13">public class DuplicatedProductExceptionMapper implements ExceptionMapper&lt;InvalidProductDataException&gt; {</span>
+    @Override
+    public Response toResponse(InvalidProductDataException e) {
+<span class="fc" id="L16">        CauseResponseDto cause = CauseResponseDto.builder()</span>
+<span class="fc" id="L17">                .department(&quot;items&quot;)</span>
+<span class="fc" id="L18">                .causeId(409)</span>
+<span class="fc" id="L19">                .type(&quot;error&quot;)</span>
+<span class="fc" id="L20">                .code(&quot;item.duplicate&quot;)</span>
+<span class="fc" id="L21">                .references(List.of(&quot;product_id&quot;))</span>
+<span class="fc" id="L22">                .message(e.getMessage())</span>
+<span class="fc" id="L23">                .build();</span>
+
+<span class="fc" id="L25">        ErrorResponseDto errorResponse = ErrorResponseDto.builder()</span>
+<span class="fc" id="L26">                .message(&quot;Duplicate product error&quot;)</span>
+<span class="fc" id="L27">                .error(&quot;duplicate_error&quot;)</span>
+<span class="fc" id="L28">                .status(409)</span>
+<span class="fc" id="L29">                .cause(List.of(cause))</span>
+<span class="fc" id="L30">                .build();</span>
+
+<span class="fc" id="L32">        return Response.status(Response.Status.CONFLICT)</span>
+<span class="fc" id="L33">                .entity(errorResponse)</span>
+<span class="fc" id="L34">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

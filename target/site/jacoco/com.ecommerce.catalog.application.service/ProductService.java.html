@@ -1,0 +1,581 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">item-detail-api</a> &gt; <a href="index.source.html" class="el_package">com.ecommerce.catalog.application.service</a> &gt; <span class="el_source">ProductService.java</span></div><h1>ProductService.java</h1><pre class="source lang-java linenums">package com.ecommerce.catalog.application.service;
+
+import com.ecommerce.catalog.application.dto.*;
+import com.ecommerce.catalog.application.enums.ProductStatus;
+import com.ecommerce.catalog.domain.repository.ProductRepository;
+import com.ecommerce.catalog.domain.exception.ProductNotFoundException;
+import com.ecommerce.catalog.domain.exception.InvalidProductDataException;
+import com.ecommerce.catalog.domain.exception.DuplicateProductException;
+import com.ecommerce.catalog.infrastructure.web.dto.request.*;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.validation.Valid;
+import jakarta.validation.Validator;
+import jakarta.validation.ConstraintViolation;
+import lombok.extern.slf4j.Slf4j;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
+
+/**
+ * Servicio de aplicación para gestión de productos
+ * Contiene toda la lógica de negocio para operaciones CRUD
+ */
+@ApplicationScoped
+<span class="fc" id="L30">@Slf4j</span>
+public class ProductService {
+
+    private final ProductRepository productRepository;
+
+    private final Validator validator;
+
+    @Inject
+<span class="fc" id="L38">    ProductService(ProductRepository productRepository, Validator validator) {</span>
+<span class="fc" id="L39">        this.productRepository = productRepository;</span>
+<span class="fc" id="L40">        this.validator = validator;</span>
+<span class="fc" id="L41">    }</span>
+
+    // ================================
+    // OPERACIONES CREATE (C)
+    // ================================
+
+    /**
+     * Crear un nuevo producto
+     */
+    public ProductDto createProduct(@Valid CreateProductRequestDto request) {
+<span class="fc" id="L51">        log.info(&quot;🆕 Creando nuevo producto: {}&quot;, request.getTitle());</span>
+
+        // Validar request
+<span class="fc" id="L54">        validateCreateRequest(request);</span>
+
+        // Generar ID único tipo MercadoLibre
+<span class="fc" id="L57">        String productId = generateProductId();</span>
+
+        // Verificar que el ID no exista (aunque es muy improbable)
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        if (productRepository.findById(productId).isPresent()) {</span>
+<span class="fc" id="L61">            throw new DuplicateProductException(&quot;El ID generado ya existe: &quot; + productId);</span>
+        }
+
+        // Mapear request a DTO
+<span class="fc" id="L65">        ProductDto product = mapCreateRequestToDto(request, productId);</span>
+
+        // Aplicar reglas de negocio
+<span class="fc" id="L68">        applyBusinessRulesForCreation(product);</span>
+
+        // Simular guardado (en implementación real se guardaría)
+<span class="fc" id="L71">        log.info(&quot;✅ Producto creado exitosamente: {} - {}&quot;, product.getId(), product.getTitle());</span>
+
+<span class="fc" id="L73">        return product;</span>
+    }
+
+    /**
+     * Crear múltiples productos en batch
+     */
+    public List&lt;ProductDto&gt; createProducts(List&lt;CreateProductRequestDto&gt; requests) {
+<span class="fc" id="L80">        log.info(&quot;🆕 Creando {} productos en batch&quot;, requests.size());</span>
+
+<span class="fc bfc" id="L82" title="All 2 branches covered.">        if (requests.size() &gt; 100) {</span>
+<span class="fc" id="L83">            throw new InvalidProductDataException(&quot;No se pueden crear más de 100 productos a la vez&quot;);</span>
+        }
+
+<span class="fc" id="L86">        return requests.stream()</span>
+<span class="fc" id="L87">                .map(this::createProduct)</span>
+<span class="fc" id="L88">                .toList();</span>
+    }
+
+    // ================================
+    // OPERACIONES READ (R)
+    // ================================
+
+    /**
+     * Obtener producto por ID
+     */
+    public ProductDto getProductById(String id) {
+<span class="fc" id="L99">        log.debug(&quot;🔍 Buscando producto por ID: {}&quot;, id);</span>
+
+<span class="fc" id="L101">        validateProductId(id);</span>
+
+<span class="fc" id="L103">        return productRepository.findById(id)</span>
+<span class="fc" id="L104">                .orElseThrow(() -&gt; new ProductNotFoundException(&quot;Producto no encontrado: &quot; + id));</span>
+    }
+
+    /**
+     * Obtener todos los productos con paginación
+     */
+    public ProductListResponseDto getAllProducts(int offset, int limit, String sortBy) {
+<span class="fc" id="L111">        log.debug(&quot;📋 Obteniendo productos - Offset: {}, Limit: {}, Sort: {}&quot;, offset, limit, sortBy);</span>
+
+<span class="fc" id="L113">        validatePaginationParams(offset, limit);</span>
+
+<span class="fc" id="L115">        List&lt;ProductDto&gt; allProducts = productRepository.findAll();</span>
+
+        // Aplicar ordenamiento
+<span class="fc" id="L118">        List&lt;ProductDto&gt; sortedProducts = applySorting(allProducts, sortBy);</span>
+
+        // Aplicar paginación
+<span class="fc" id="L121">        List&lt;ProductSummaryResponseDto&gt; paginatedResults = applyPagination(sortedProducts, offset, limit);</span>
+
+        // Crear respuesta con metadatos
+<span class="fc" id="L124">        PagingResponseDto paging = PagingResponseDto.builder()</span>
+<span class="fc" id="L125">                .total(allProducts.size())</span>
+<span class="fc" id="L126">                .offset(offset)</span>
+<span class="fc" id="L127">                .limit(limit)</span>
+<span class="fc" id="L128">                .build();</span>
+
+<span class="fc" id="L130">        return ProductListResponseDto.builder()</span>
+<span class="fc" id="L131">                .results(paginatedResults)</span>
+<span class="fc" id="L132">                .paging(paging)</span>
+<span class="fc" id="L133">                .build();</span>
+    }
+
+    /**
+     * Buscar productos por título
+     */
+    public List&lt;ProductDto&gt; searchByTitle(String title) {
+<span class="fc" id="L140">        log.debug(&quot;🔍 Buscando productos por título: {}&quot;, title);</span>
+
+<span class="fc bfc" id="L142" title="All 4 branches covered.">        if (title == null || title.trim().length() &lt; 2) {</span>
+<span class="fc" id="L143">            throw new InvalidProductDataException(&quot;El título debe tener al menos 2 caracteres&quot;);</span>
+        }
+
+<span class="fc" id="L146">        List&lt;ProductDto&gt; results = productRepository.findByTitleContaining(title.trim());</span>
+
+<span class="fc" id="L148">        log.debug(&quot;✅ Encontrados {} productos con título: {}&quot;, results.size(), title);</span>
+<span class="fc" id="L149">        return results;</span>
+    }
+
+    /**
+     * Buscar productos por marca
+     */
+    public List&lt;ProductDto&gt; searchByBrand(String brand) {
+<span class="fc" id="L156">        log.debug(&quot;🔍 Buscando productos por marca: {}&quot;, brand);</span>
+
+<span class="fc" id="L158">        validateBrandExists(brand);</span>
+
+<span class="fc" id="L160">        List&lt;ProductDto&gt; results = productRepository.findByBrand(brand);</span>
+
+<span class="fc" id="L162">        log.debug(&quot;✅ Encontrados {} productos de marca: {}&quot;, results.size(), brand);</span>
+<span class="fc" id="L163">        return results;</span>
+    }
+
+    /**
+     * Buscar productos por rango de precio
+     */
+    public List&lt;ProductDto&gt; searchByPriceRange(BigDecimal minPrice, BigDecimal maxPrice, String currency) {
+<span class="fc" id="L170">        log.debug(&quot;🔍 Buscando productos por precio: {} - {} {}&quot;, minPrice, maxPrice, currency);</span>
+
+<span class="fc" id="L172">        validatePriceRange(minPrice, maxPrice);</span>
+
+<span class="fc" id="L174">        List&lt;ProductDto&gt; results = productRepository.findByPriceRange(minPrice, maxPrice);</span>
+
+        // Filtrar por moneda si se especifica
+<span class="pc bpc" id="L177" title="2 of 4 branches missed.">        if (currency != null &amp;&amp; !currency.isBlank()) {</span>
+<span class="fc" id="L178">            results = results.stream()</span>
+<span class="fc" id="L179">                    .filter(product -&gt; currency.equalsIgnoreCase(product.getCurrencyId()))</span>
+<span class="fc" id="L180">                    .toList();</span>
+        }
+
+<span class="fc" id="L183">        log.debug(&quot;✅ Encontrados {} productos en rango de precio&quot;, results.size());</span>
+<span class="fc" id="L184">        return results;</span>
+    }
+
+    /**
+     * Obtener opciones de ordenamiento disponibles
+     */
+    public List&lt;SortResponseDto&gt; getAvailableSortOptions() {
+<span class="fc" id="L191">        return List.of(</span>
+                new SortResponseDto(&quot;relevance&quot;, &quot;Más relevantes&quot;),
+                new SortResponseDto(&quot;price_asc&quot;, &quot;Menor precio&quot;),
+                new SortResponseDto(&quot;price_desc&quot;, &quot;Mayor precio&quot;),
+                new SortResponseDto(&quot;title_asc&quot;, &quot;A-Z&quot;),
+                new SortResponseDto(&quot;title_desc&quot;, &quot;Z-A&quot;),
+                new SortResponseDto(&quot;date_desc&quot;, &quot;Más recientes&quot;),
+                new SortResponseDto(&quot;date_asc&quot;, &quot;Más antiguos&quot;)
+        );
+    }
+
+    /**
+     * Crear respuesta de listado completa con metadatos
+     */
+    private ProductListResponseDto createListResponse(List&lt;ProductSummaryResponseDto&gt; results,
+                                                   String query, int offset, int limit,
+                                                   int total, String sortBy) {
+        // Crear paginación
+<span class="fc" id="L209">        PagingResponseDto paging = new PagingResponseDto(total, offset, limit);</span>
+
+        // Crear opciones de ordenamiento
+<span class="fc" id="L212">        List&lt;SortResponseDto&gt; availableSorts = getAvailableSortOptions();</span>
+
+        // Marcar el ordenamiento activo
+<span class="fc" id="L215">        SortResponseDto currentSort = null;</span>
+<span class="pc bpc" id="L216" title="2 of 4 branches missed.">        if (sortBy != null &amp;&amp; !sortBy.isBlank()) {</span>
+<span class="fc" id="L217">            currentSort = availableSorts.stream()</span>
+<span class="fc" id="L218">                    .filter(sort -&gt; sortBy.equals(sort.getId()))</span>
+<span class="fc" id="L219">                    .findFirst()</span>
+<span class="fc" id="L220">                    .map(sort -&gt; {</span>
+<span class="fc" id="L221">                        sort.setActive(true);</span>
+<span class="fc" id="L222">                        return sort;</span>
+                    })
+<span class="fc" id="L224">                    .orElse(null);</span>
+        }
+
+<span class="fc" id="L227">        return ProductListResponseDto.builder()</span>
+<span class="fc" id="L228">                .siteId(&quot;MLA&quot;) // Simulando site de Argentina</span>
+<span class="fc" id="L229">                .query(query)</span>
+<span class="fc" id="L230">                .results(results)</span>
+<span class="fc" id="L231">                .paging(paging)</span>
+<span class="fc" id="L232">                .sort(currentSort)</span>
+<span class="fc" id="L233">                .availableSorts(availableSorts)</span>
+<span class="fc" id="L234">                .build();</span>
+    }
+
+    /**
+     * Búsqueda avanzada con múltiples filtros
+     */
+    public ProductListResponseDto advancedSearch(String query, String brand, BigDecimal minPrice,
+                                              BigDecimal maxPrice, String condition,
+                                              int offset, int limit, String sortBy) {
+<span class="fc" id="L243">        log.info(&quot;🔍 Búsqueda avanzada - Query: '{}', Marca: '{}', Precio: {}-{}, Condición: '{}', Sort: '{}'&quot;,</span>
+                query, brand, minPrice, maxPrice, condition, sortBy);
+
+<span class="fc" id="L246">        validatePaginationParams(offset, limit);</span>
+<span class="pc bpc" id="L247" title="2 of 4 branches missed.">        if (minPrice != null &amp;&amp; maxPrice != null) {</span>
+<span class="fc" id="L248">            validatePriceRange(minPrice, maxPrice);</span>
+        }
+
+<span class="fc" id="L251">        List&lt;ProductDto&gt; results = productRepository.searchAdvanced(query, brand, minPrice, maxPrice, condition);</span>
+
+        // Aplicar ordenamiento
+<span class="fc" id="L254">        List&lt;ProductDto&gt; sortedResults = applySorting(results, sortBy);</span>
+
+        // Aplicar paginación
+<span class="fc" id="L257">        List&lt;ProductSummaryResponseDto&gt; paginatedResults = applyPagination(sortedResults, offset, limit);</span>
+
+        // Crear respuesta completa
+<span class="fc" id="L260">        ProductListResponseDto response = createListResponse(paginatedResults, query, offset, limit, results.size(), sortBy);</span>
+
+<span class="fc" id="L262">        log.info(&quot;✅ Búsqueda avanzada completada. {} resultados encontrados&quot;, results.size());</span>
+<span class="fc" id="L263">        return response;</span>
+    }
+
+    // ================================
+    // OPERACIONES UPDATE (U)
+    // ================================
+
+    /**
+     * Actualizar producto completo
+     */
+    public ProductDto updateProduct(String id, @Valid UpdateProductRequestDto request) {
+<span class="fc" id="L274">        log.info(&quot;🔄 Actualizando producto: {}&quot;, id);</span>
+
+        // Verificar que el producto existe
+<span class="fc" id="L277">        ProductDto existingProduct = getProductById(id);</span>
+
+        // Validar request
+<span class="fc" id="L280">        validateUpdateRequest(request);</span>
+
+        // Aplicar cambios
+<span class="fc" id="L283">        ProductDto updatedProduct = applyUpdates(existingProduct, request);</span>
+
+        // Simular guardado
+<span class="fc" id="L286">        log.info(&quot;✅ Producto actualizado exitosamente: {}&quot;, id);</span>
+
+<span class="fc" id="L288">        return updatedProduct;</span>
+    }
+
+    /**
+     * Actualizar precio específico
+     */
+    public ProductDto updatePrice(String id, BigDecimal newPrice, String reason) {
+<span class="fc" id="L295">        log.info(&quot;💰 Actualizando precio del producto {} a {}&quot;, id, newPrice);</span>
+
+<span class="fc" id="L297">        ProductDto product = getProductById(id);</span>
+
+<span class="fc bfc" id="L299" title="All 4 branches covered.">        if (newPrice == null || newPrice.compareTo(BigDecimal.ZERO) &lt;= 0) {</span>
+<span class="fc" id="L300">            throw new InvalidProductDataException(&quot;El precio debe ser mayor a 0&quot;);</span>
+        }
+
+<span class="fc" id="L303">        BigDecimal oldPrice = product.getPrice();</span>
+<span class="fc" id="L304">        product.setPrice(newPrice);</span>
+<span class="fc" id="L305">        product.setLastUpdated(LocalDateTime.now());</span>
+
+        // Log del cambio de precio
+<span class="fc" id="L308">        log.info(&quot;💰 Precio actualizado: {} -&gt; {} (Razón: {})&quot;, oldPrice, newPrice, reason);</span>
+
+<span class="fc" id="L310">        return product;</span>
+    }
+
+    /**
+     * Actualizar estado del producto
+     */
+    public ProductDto updateStatus(String id, String newStatus) {
+<span class="fc" id="L317">        log.info(&quot;📝 Actualizando estado del producto {} a {}&quot;, id, newStatus);</span>
+
+<span class="fc" id="L319">        ProductDto product = getProductById(id);</span>
+
+<span class="fc" id="L321">        validateStatus(newStatus);</span>
+<span class="fc" id="L322">        validateStatusTransition(product.getStatus(), newStatus);</span>
+
+<span class="fc" id="L324">        String oldStatus = product.getStatus();</span>
+<span class="fc" id="L325">        product.setStatus(newStatus);</span>
+<span class="fc" id="L326">        product.setLastUpdated(LocalDateTime.now());</span>
+
+<span class="fc" id="L328">        log.info(&quot;📝 Estado actualizado: {} -&gt; {}&quot;, oldStatus, newStatus);</span>
+
+<span class="fc" id="L330">        return product;</span>
+    }
+
+    // ================================
+    // OPERACIONES DELETE (D)
+    // ================================
+
+    /**
+     * Eliminar producto (soft delete)
+     */
+    public boolean deleteProduct(String id) {
+<span class="fc" id="L341">        log.info(&quot;🗑️ Eliminando producto: {}&quot;, id);</span>
+
+<span class="fc" id="L343">        ProductDto product = getProductById(id);</span>
+
+        // Verificar que se puede eliminar
+<span class="fc" id="L346">        validateCanDelete(product);</span>
+
+        // Soft delete: cambiar estado a &quot;closed&quot;
+<span class="fc" id="L349">        product.setStatus(ProductStatus.CLOSED.getValue());</span>
+<span class="fc" id="L350">        product.setLastUpdated(LocalDateTime.now());</span>
+
+<span class="fc" id="L352">        log.info(&quot;✅ Producto eliminado (soft delete): {}&quot;, id);</span>
+<span class="fc" id="L353">        return true;</span>
+    }
+
+    /**
+     * Eliminar productos en batch
+     */
+    public BatchOperationResultDto deleteProducts(List&lt;String&gt; ids) {
+<span class="fc" id="L360">        log.info(&quot;🗑️ Eliminando {} productos en batch&quot;, ids.size());</span>
+
+<span class="fc" id="L362">        int successful = 0;</span>
+<span class="fc" id="L363">        int failed = 0;</span>
+
+<span class="fc bfc" id="L365" title="All 2 branches covered.">        for (String id : ids) {</span>
+            try {
+<span class="fc" id="L367">                deleteProduct(id);</span>
+<span class="fc" id="L368">                successful++;</span>
+<span class="fc" id="L369">            } catch (Exception e) {</span>
+<span class="fc" id="L370">                log.error(&quot;Error al eliminar producto {}: {}&quot;, id, e.getMessage());</span>
+<span class="fc" id="L371">                failed++;</span>
+<span class="fc" id="L372">            }</span>
+<span class="fc" id="L373">        }</span>
+
+<span class="fc" id="L375">        return BatchOperationResultDto.builder()</span>
+<span class="fc" id="L376">                .totalProcessed(ids.size())</span>
+<span class="fc" id="L377">                .successful(successful)</span>
+<span class="fc" id="L378">                .failed(failed)</span>
+<span class="fc" id="L379">                .build();</span>
+    }
+
+    // ================================
+    // OPERACIONES DE ANÁLISIS
+    // ================================
+
+    /**
+     * Obtener estadísticas de productos
+     */
+    public ProductStatisticsDto getStatistics() {
+<span class="fc" id="L390">        log.debug(&quot;📊 Generando estadísticas de productos&quot;);</span>
+
+<span class="fc" id="L392">        long totalProducts = productRepository.count();</span>
+<span class="fc" id="L393">        List&lt;String&gt; brands = productRepository.findAllBrands();</span>
+<span class="fc" id="L394">        List&lt;String&gt; categories = productRepository.findAllCategories();</span>
+<span class="fc" id="L395">        long activeProducts = productRepository.findByStatus(ProductStatus.ACTIVE.getValue()).size();</span>
+<span class="fc" id="L396">        long productsWithVariations = productRepository.findWithVariations().size();</span>
+
+<span class="fc" id="L398">        return ProductStatisticsDto.builder()</span>
+<span class="fc" id="L399">                .totalProducts(totalProducts)</span>
+<span class="fc" id="L400">                .activeProducts(activeProducts)</span>
+<span class="fc" id="L401">                .totalBrands(brands.size())</span>
+<span class="fc" id="L402">                .totalCategories(categories.size())</span>
+<span class="fc" id="L403">                .productsWithVariations(productsWithVariations)</span>
+<span class="fc" id="L404">                .brands(brands)</span>
+<span class="fc" id="L405">                .categories(categories)</span>
+<span class="fc" id="L406">                .build();</span>
+    }
+
+    // ================================
+    // MÉTODOS AUXILIARES
+    // ================================
+
+    private void validateCreateRequest(CreateProductRequestDto request) {
+<span class="fc" id="L414">        Set&lt;ConstraintViolation&lt;CreateProductRequestDto&gt;&gt; violations = validator.validate(request);</span>
+<span class="fc bfc" id="L415" title="All 2 branches covered.">        if (!violations.isEmpty()) {</span>
+<span class="fc" id="L416">            String errors = violations.stream()</span>
+<span class="fc" id="L417">                    .map(ConstraintViolation::getMessage)</span>
+<span class="fc" id="L418">                    .collect(Collectors.joining(&quot;, &quot;));</span>
+<span class="fc" id="L419">            throw new InvalidProductDataException(&quot;Errores de validación: &quot; + errors);</span>
+        }
+<span class="fc" id="L421">    }</span>
+
+    private void validateUpdateRequest(UpdateProductRequestDto request) {
+<span class="fc" id="L424">        Set&lt;ConstraintViolation&lt;UpdateProductRequestDto&gt;&gt; violations = validator.validate(request);</span>
+<span class="fc bfc" id="L425" title="All 2 branches covered.">        if (!violations.isEmpty()) {</span>
+<span class="fc" id="L426">            String errors = violations.stream()</span>
+<span class="fc" id="L427">                    .map(ConstraintViolation::getMessage)</span>
+<span class="fc" id="L428">                    .collect(Collectors.joining(&quot;, &quot;));</span>
+<span class="fc" id="L429">            throw new InvalidProductDataException(&quot;Errores de validación: &quot; + errors);</span>
+        }
+<span class="fc" id="L431">    }</span>
+
+    private void validateProductId(String id) {
+<span class="fc bfc" id="L434" title="All 4 branches covered.">        if (id == null || id.trim().isEmpty()) {</span>
+<span class="fc" id="L435">            throw new InvalidProductDataException(&quot;El ID del producto no puede estar vacío&quot;);</span>
+        }
+<span class="fc bfc" id="L437" title="All 2 branches covered.">        if (!id.matches(&quot;^MLA\\d+$&quot;)) {</span>
+<span class="fc" id="L438">            throw new InvalidProductDataException(&quot;El ID debe tener formato MLA seguido de números&quot;);</span>
+        }
+<span class="fc" id="L440">    }</span>
+
+    private void validatePaginationParams(int offset, int limit) {
+<span class="fc bfc" id="L443" title="All 2 branches covered.">        if (offset &lt; 0) {</span>
+<span class="fc" id="L444">            throw new InvalidProductDataException(&quot;El offset no puede ser negativo&quot;);</span>
+        }
+<span class="fc bfc" id="L446" title="All 4 branches covered.">        if (limit &lt;= 0 || limit &gt; 200) {</span>
+<span class="fc" id="L447">            throw new InvalidProductDataException(&quot;El limit debe estar entre 1 y 200&quot;);</span>
+        }
+<span class="fc" id="L449">    }</span>
+
+    private void validatePriceRange(BigDecimal minPrice, BigDecimal maxPrice) {
+<span class="pc bpc" id="L452" title="1 of 4 branches missed.">        if (minPrice != null &amp;&amp; minPrice.compareTo(BigDecimal.ZERO) &lt; 0) {</span>
+<span class="fc" id="L453">            throw new InvalidProductDataException(&quot;El precio mínimo no puede ser negativo&quot;);</span>
+        }
+<span class="pc bpc" id="L455" title="2 of 4 branches missed.">        if (maxPrice != null &amp;&amp; maxPrice.compareTo(BigDecimal.ZERO) &lt;= 0) {</span>
+<span class="nc" id="L456">            throw new InvalidProductDataException(&quot;El precio máximo debe ser mayor a 0&quot;);</span>
+        }
+<span class="pc bpc" id="L458" title="2 of 6 branches missed.">        if (minPrice != null &amp;&amp; maxPrice != null &amp;&amp; minPrice.compareTo(maxPrice) &gt; 0) {</span>
+<span class="fc" id="L459">            throw new InvalidProductDataException(&quot;El precio mínimo no puede ser mayor al máximo&quot;);</span>
+        }
+<span class="fc" id="L461">    }</span>
+
+    private void validateBrandExists(String brand) {
+<span class="fc" id="L464">        List&lt;String&gt; availableBrands = productRepository.findAllBrands();</span>
+<span class="fc bfc" id="L465" title="All 2 branches covered.">        if (!availableBrands.contains(brand)) {</span>
+<span class="fc" id="L466">            throw new InvalidProductDataException(&quot;La marca '&quot; + brand + &quot;' no existe. Marcas disponibles: &quot; +</span>
+<span class="fc" id="L467">                    String.join(&quot;, &quot;, availableBrands));</span>
+        }
+<span class="fc" id="L469">    }</span>
+
+    private void validateStatus(String status) {
+<span class="fc" id="L472">        List&lt;String&gt; validStatuses = Arrays.stream(ProductStatus.values())</span>
+<span class="fc" id="L473">                .map(ProductStatus::getValue)</span>
+<span class="fc" id="L474">                .toList();</span>
+<span class="fc bfc" id="L475" title="All 2 branches covered.">        if (!validStatuses.contains(status)) {</span>
+<span class="fc" id="L476">            throw new InvalidProductDataException(&quot;Estado inválido. Estados válidos: &quot; +</span>
+<span class="fc" id="L477">                    String.join(&quot;, &quot;, validStatuses));</span>
+        }
+<span class="fc" id="L479">    }</span>
+
+    private void validateStatusTransition(String fromStatus, String toStatus) {
+        // Reglas de transición de estado
+<span class="fc bfc" id="L483" title="All 2 branches covered.">        if (&quot;closed&quot;.equals(fromStatus)) {</span>
+<span class="fc" id="L484">            throw new InvalidProductDataException(&quot;No se puede cambiar el estado de un producto cerrado&quot;);</span>
+        }
+<span class="fc" id="L486">    }</span>
+
+    private void validateCanDelete(ProductDto product) {
+<span class="fc bfc" id="L489" title="All 2 branches covered.">        if (&quot;closed&quot;.equals(product.getStatus())) {</span>
+<span class="fc" id="L490">            throw new InvalidProductDataException(&quot;El producto ya está eliminado&quot;);</span>
+        }
+<span class="fc" id="L492">    }</span>
+
+    private String generateProductId() {
+        // Generar ID único tipo MercadoLibre
+<span class="fc" id="L496">        return &quot;MLA&quot; + System.currentTimeMillis() + ThreadLocalRandom.current().nextInt(1000);</span>
+    }
+
+    private ProductDto mapCreateRequestToDto(CreateProductRequestDto request, String id) {
+<span class="fc" id="L500">        return ProductDto.builder()</span>
+<span class="fc" id="L501">                .id(id)</span>
+<span class="fc" id="L502">                .title(request.getTitle())</span>
+<span class="fc" id="L503">                .description(request.getDescription())</span>
+<span class="fc" id="L504">                .price(request.getPrice())</span>
+<span class="fc" id="L505">                .currencyId(request.getCurrencyId())</span>
+<span class="fc" id="L506">                .condition(request.getCondition())</span>
+<span class="fc" id="L507">                .status(&quot;active&quot;) // Estado inicial</span>
+<span class="fc" id="L508">                .thumbnail(request.getThumbnail())</span>
+<span class="fc" id="L509">                .dateCreated(LocalDateTime.now())</span>
+<span class="fc" id="L510">                .lastUpdated(LocalDateTime.now())</span>
+                // Mapear pictures, attributes, variations si es necesario
+<span class="fc" id="L512">                .build();</span>
+    }
+
+    private void applyBusinessRulesForCreation(ProductDto product) {
+        // Reglas de negocio para creación
+        // Ejemplo: productos nuevos deben tener precio mínimo
+<span class="pc bpc" id="L518" title="1 of 2 branches missed.">        if (&quot;new&quot;.equals(product.getCondition()) &amp;&amp;</span>
+<span class="fc bfc" id="L519" title="All 2 branches covered.">                product.getPrice().compareTo(new BigDecimal(&quot;100&quot;)) &lt; 0) {</span>
+<span class="fc" id="L520">            throw new InvalidProductDataException(&quot;Productos nuevos deben tener precio mínimo de $100&quot;);</span>
+        }
+<span class="fc" id="L522">    }</span>
+
+    private ProductDto applyUpdates(ProductDto existing, UpdateProductRequestDto request) {
+        // Aplicar solo los campos que no son null en el request
+<span class="pc bpc" id="L526" title="1 of 2 branches missed.">        if (request.getTitle() != null) existing.setTitle(request.getTitle());</span>
+<span class="pc bpc" id="L527" title="1 of 2 branches missed.">        if (request.getDescription() != null) existing.setDescription(request.getDescription());</span>
+<span class="pc bpc" id="L528" title="1 of 2 branches missed.">        if (request.getPrice() != null) existing.setPrice(request.getPrice());</span>
+<span class="pc bpc" id="L529" title="1 of 2 branches missed.">        if (request.getCurrencyId() != null) existing.setCurrencyId(request.getCurrencyId());</span>
+<span class="pc bpc" id="L530" title="1 of 2 branches missed.">        if (request.getCondition() != null) existing.setCondition(request.getCondition());</span>
+<span class="pc bpc" id="L531" title="1 of 2 branches missed.">        if (request.getStatus() != null) existing.setStatus(request.getStatus());</span>
+<span class="pc bpc" id="L532" title="1 of 2 branches missed.">        if (request.getThumbnail() != null) existing.setThumbnail(request.getThumbnail());</span>
+
+<span class="fc" id="L534">        existing.setLastUpdated(LocalDateTime.now());</span>
+
+<span class="fc" id="L536">        return existing;</span>
+    }
+
+    private List&lt;ProductDto&gt; applySorting(List&lt;ProductDto&gt; products, String sortBy) {
+<span class="pc bpc" id="L540" title="1 of 4 branches missed.">        if (sortBy == null || sortBy.isBlank()) {</span>
+<span class="fc" id="L541">            return products;</span>
+        }
+
+<span class="pc bpc" id="L544" title="3 of 5 branches missed.">        return switch (sortBy.toLowerCase()) {</span>
+<span class="fc" id="L545">            case &quot;price_asc&quot; -&gt; products.stream()</span>
+<span class="fc" id="L546">                    .sorted((a, b) -&gt; a.getPrice().compareTo(b.getPrice()))</span>
+<span class="fc" id="L547">                    .toList();</span>
+<span class="nc" id="L548">            case &quot;price_desc&quot; -&gt; products.stream()</span>
+<span class="nc" id="L549">                    .sorted((a, b) -&gt; b.getPrice().compareTo(a.getPrice()))</span>
+<span class="nc" id="L550">                    .toList();</span>
+<span class="fc" id="L551">            case &quot;title_asc&quot; -&gt; products.stream()</span>
+<span class="fc" id="L552">                    .sorted((a, b) -&gt; a.getTitle().compareTo(b.getTitle()))</span>
+<span class="fc" id="L553">                    .toList();</span>
+<span class="nc" id="L554">            case &quot;date_desc&quot; -&gt; products.stream()</span>
+<span class="nc" id="L555">                    .sorted((a, b) -&gt; b.getDateCreated().compareTo(a.getDateCreated()))</span>
+<span class="nc" id="L556">                    .toList();</span>
+<span class="nc" id="L557">            default -&gt; products;</span>
+        };
+    }
+
+    private List&lt;ProductSummaryResponseDto&gt; applyPagination(List&lt;ProductDto&gt; products, int offset, int limit) {
+<span class="fc" id="L562">        return products.stream()</span>
+<span class="fc" id="L563">                .skip(offset)</span>
+<span class="fc" id="L564">                .limit(limit)</span>
+<span class="fc" id="L565">                .map(this::toSummaryResponse)</span>
+<span class="fc" id="L566">                .toList();</span>
+    }
+
+    private ProductSummaryResponseDto toSummaryResponse(ProductDto product) {
+<span class="fc" id="L570">        return ProductSummaryResponseDto.builder()</span>
+<span class="fc" id="L571">                .id(product.getId())</span>
+<span class="fc" id="L572">                .title(product.getTitle())</span>
+<span class="fc" id="L573">                .price(product.getPrice())</span>
+<span class="fc" id="L574">                .currencyId(product.getCurrencyId())</span>
+<span class="fc" id="L575">                .condition(product.getCondition())</span>
+<span class="fc" id="L576">                .thumbnail(product.getThumbnail())</span>
+<span class="fc" id="L577">                .status(product.getStatus())</span>
+<span class="fc" id="L578">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

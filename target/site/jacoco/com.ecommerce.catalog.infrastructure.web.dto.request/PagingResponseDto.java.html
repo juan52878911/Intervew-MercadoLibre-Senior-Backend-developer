@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PagingResponseDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">item-detail-api</a> &gt; <a href="index.source.html" class="el_package">com.ecommerce.catalog.infrastructure.web.dto.request</a> &gt; <span class="el_source">PagingResponseDto.java</span></div><h1>PagingResponseDto.java</h1><pre class="source lang-java linenums">package com.ecommerce.catalog.infrastructure.web.dto.request;
+
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+/**
+ * DTO para información de paginación
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class PagingResponseDto {
+
+    @JsonProperty(&quot;total&quot;)
+    private Integer total;
+
+    @JsonProperty(&quot;primary_results&quot;)
+    private Integer primaryResults;
+
+    @JsonProperty(&quot;offset&quot;)
+    private Integer offset;
+
+    @JsonProperty(&quot;limit&quot;)
+    private Integer limit;
+
+    @JsonProperty(&quot;has_next_page&quot;)
+    private Boolean hasNextPage;
+
+    @JsonProperty(&quot;has_previous_page&quot;)
+    private Boolean hasPreviousPage;
+
+    @JsonProperty(&quot;next_offset&quot;)
+    private Integer nextOffset;
+
+    @JsonProperty(&quot;previous_offset&quot;)
+    private Integer previousOffset;
+
+    // Constructor adicional que calcula automáticamente los campos de navegación
+<span class="fc" id="L44">    public PagingResponseDto(Integer total, Integer offset, Integer limit) {</span>
+<span class="fc" id="L45">        this.total = total;</span>
+<span class="fc" id="L46">        this.offset = offset;</span>
+<span class="fc" id="L47">        this.limit = limit;</span>
+<span class="fc" id="L48">        this.primaryResults = total;</span>
+
+        // Calcular navegación
+<span class="pc bpc" id="L51" title="1 of 2 branches missed.">        this.hasNextPage = (offset + limit) &lt; total;</span>
+<span class="pc bpc" id="L52" title="1 of 2 branches missed.">        this.hasPreviousPage = offset &gt; 0;</span>
+<span class="pc bpc" id="L53" title="1 of 2 branches missed.">        this.nextOffset = hasNextPage ? offset + limit : null;</span>
+<span class="pc bpc" id="L54" title="1 of 2 branches missed.">        this.previousOffset = hasPreviousPage ? Math.max(0, offset - limit) : null;</span>
+<span class="fc" id="L55">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

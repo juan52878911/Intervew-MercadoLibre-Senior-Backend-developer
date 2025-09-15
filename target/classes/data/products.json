@@ -1,0 +1,502 @@
+{
+  "products": [
+    {
+      "id": "MLA1136716168",
+      "title": "Zapatillas Nike Air Max 270 - Negras",
+      "description": "Las Nike Air Max 270 ofrecen una comodidad excepcional con la unidad Air más grande en el talón de Nike hasta la fecha. Diseñadas para el uso diario, combinan estilo moderno con tecnología de amortiguación avanzada.",
+      "price": 89999.99,
+      "currency_id": "ARS",
+      "condition": "new",
+      "status": "active",
+      "thumbnail": "https://http2.mlstatic.com/D_963513-MLA49868862376_052022-I.jpg",
+      "permalink": "https://articulo.mercadolibre.com.ar/MLA-1136716168-zapatillas-nike-air-max-270-negras-_JM",
+      "date_created": "2024-01-15T10:30:00Z",
+      "last_updated": "2024-03-10T14:25:00Z",
+      "pictures": [
+        {
+          "id": "963513-MLA49868862376_052022",
+          "url": "https://http2.mlstatic.com/D_963513-MLA49868862376_052022-O.jpg",
+          "secure_url": "https://http2.mlstatic.com/D_963513-MLA49868862376_052022-O.jpg"
+        },
+        {
+          "id": "963514-MLA49868862377_052022",
+          "url": "https://http2.mlstatic.com/D_963514-MLA49868862377_052022-O.jpg",
+          "secure_url": "https://http2.mlstatic.com/D_963514-MLA49868862377_052022-O.jpg"
+        }
+      ],
+      "attributes": [
+        {
+          "id": "BRAND",
+          "name": "Marca",
+          "value_name": "Nike"
+        },
+        {
+          "id": "GENDER",
+          "name": "Género",
+          "value_name": "Hombre"
+        },
+        {
+          "id": "FOOTWEAR_TYPE",
+          "name": "Tipo de calzado",
+          "value_name": "Zapatillas"
+        },
+        {
+          "id": "MATERIAL",
+          "name": "Material",
+          "value_name": "Sintético"
+        },
+        {
+          "id": "STYLE",
+          "name": "Estilo",
+          "value_name": "Deportivo"
+        }
+      ],
+      "variations": [
+        {
+          "id": 174497701554,
+          "price": 89999.99,
+          "available_quantity": 3,
+          "attribute_combinations": [
+            {
+              "name": "Color",
+              "value_name": "Negro"
+            },
+            {
+              "name": "Talle",
+              "value_name": "42"
+            }
+          ]
+        },
+        {
+          "id": 174497701555,
+          "price": 89999.99,
+          "available_quantity": 2,
+          "attribute_combinations": [
+            {
+              "name": "Color",
+              "value_name": "Negro"
+            },
+            {
+              "name": "Talle",
+              "value_name": "43"
+            }
+          ]
+        },
+        {
+          "id": 174497701556,
+          "price": 89999.99,
+          "available_quantity": 1,
+          "attribute_combinations": [
+            {
+              "name": "Color",
+              "value_name": "Negro"
+            },
+            {
+              "name": "Talle",
+              "value_name": "44"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MLA2234567890",
+      "title": "iPhone 15 Pro 128GB Titanio Natural",
+      "description": "El iPhone 15 Pro presenta un diseño de titanio resistente y ligero, con el chip A17 Pro más avanzado. Incluye cámara principal de 48 MP, zoom óptico 3x y Action Button personalizable.",
+      "price": 1299999.00,
+      "currency_id": "ARS",
+      "condition": "new",
+      "status": "active",
+      "thumbnail": "https://http2.mlstatic.com/D_NQ_NP_2X_12345-MLA7891011_092023-F.webp",
+      "permalink": "https://articulo.mercadolibre.com.ar/MLA-2234567890-iphone-15-pro-128gb-titanio-natural-_JM",
+      "date_created": "2024-02-20T09:15:00Z",
+      "last_updated": "2024-03-15T16:45:00Z",
+      "pictures": [
+        {
+          "id": "12345-MLA7891011_092023",
+          "url": "https://http2.mlstatic.com/D_NQ_NP_2X_12345-MLA7891011_092023-F.webp",
+          "secure_url": "https://http2.mlstatic.com/D_NQ_NP_2X_12345-MLA7891011_092023-F.webp"
+        },
+        {
+          "id": "12346-MLA7891012_092023",
+          "url": "https://http2.mlstatic.com/D_NQ_NP_2X_12346-MLA7891012_092023-F.webp",
+          "secure_url": "https://http2.mlstatic.com/D_NQ_NP_2X_12346-MLA7891012_092023-F.webp"
+        }
+      ],
+      "attributes": [
+        {
+          "id": "BRAND",
+          "name": "Marca",
+          "value_name": "Apple"
+        },
+        {
+          "id": "MODEL",
+          "name": "Modelo",
+          "value_name": "iPhone 15 Pro"
+        },
+        {
+          "id": "STORAGE_CAPACITY",
+          "name": "Capacidad de almacenamiento",
+          "value_name": "128 GB"
+        },
+        {
+          "id": "OPERATING_SYSTEM",
+          "name": "Sistema operativo",
+          "value_name": "iOS"
+        },
+        {
+          "id": "SCREEN_SIZE",
+          "name": "Tamaño de pantalla",
+          "value_name": "6.1 pulgadas"
+        },
+        {
+          "id": "NETWORK_TYPE",
+          "name": "Tipo de red",
+          "value_name": "5G"
+        }
+      ],
+      "variations": [
+        {
+          "id": 274497701557,
+          "price": 1299999.00,
+          "available_quantity": 5,
+          "attribute_combinations": [
+            {
+              "name": "Color",
+              "value_name": "Titanio Natural"
+            },
+            {
+              "name": "Almacenamiento",
+              "value_name": "128GB"
+            }
+          ]
+        },
+        {
+          "id": 274497701558,
+          "price": 1499999.00,
+          "available_quantity": 3,
+          "attribute_combinations": [
+            {
+              "name": "Color",
+              "value_name": "Titanio Natural"
+            },
+            {
+              "name": "Almacenamiento",
+              "value_name": "256GB"
+            }
+          ]
+        },
+        {
+          "id": 274497701559,
+          "price": 1299999.00,
+          "available_quantity": 4,
+          "attribute_combinations": [
+            {
+              "name": "Color",
+              "value_name": "Titanio Azul"
+            },
+            {
+              "name": "Almacenamiento",
+              "value_name": "128GB"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MLA3345678901",
+      "title": "Notebook Lenovo ThinkPad E14 Intel Core i5 16GB RAM 512GB SSD",
+      "description": "Notebook empresarial ThinkPad E14 con procesador Intel Core i5 de 11va generación, ideal para productividad y trabajo remoto. Incluye Windows 11 Pro, pantalla de 14 pulgadas Full HD y teclado retroiluminado.",
+      "price": 899999.00,
+      "currency_id": "ARS",
+      "condition": "new",
+      "status": "active",
+      "thumbnail": "https://http2.mlstatic.com/D_NQ_NP_2X_67890-MLA5432109_032024-F.webp",
+      "permalink": "https://articulo.mercadolibre.com.ar/MLA-3345678901-notebook-lenovo-thinkpad-e14-_JM",
+      "date_created": "2024-03-01T11:20:00Z",
+      "last_updated": "2024-03-20T13:30:00Z",
+      "pictures": [
+        {
+          "id": "67890-MLA5432109_032024",
+          "url": "https://http2.mlstatic.com/D_NQ_NP_2X_67890-MLA5432109_032024-F.webp",
+          "secure_url": "https://http2.mlstatic.com/D_NQ_NP_2X_67890-MLA5432109_032024-F.webp"
+        }
+      ],
+      "attributes": [
+        {
+          "id": "BRAND",
+          "name": "Marca",
+          "value_name": "Lenovo"
+        },
+        {
+          "id": "MODEL",
+          "name": "Modelo",
+          "value_name": "ThinkPad E14"
+        },
+        {
+          "id": "PROCESSOR_BRAND",
+          "name": "Marca del procesador",
+          "value_name": "Intel"
+        },
+        {
+          "id": "PROCESSOR_MODEL",
+          "name": "Modelo del procesador",
+          "value_name": "Core i5"
+        },
+        {
+          "id": "RAM_MEMORY",
+          "name": "Memoria RAM",
+          "value_name": "16 GB"
+        },
+        {
+          "id": "STORAGE_TYPE",
+          "name": "Tipo de almacenamiento",
+          "value_name": "SSD"
+        },
+        {
+          "id": "STORAGE_CAPACITY",
+          "name": "Capacidad de almacenamiento",
+          "value_name": "512 GB"
+        },
+        {
+          "id": "SCREEN_SIZE",
+          "name": "Tamaño de pantalla",
+          "value_name": "14 pulgadas"
+        },
+        {
+          "id": "OPERATING_SYSTEM",
+          "name": "Sistema operativo",
+          "value_name": "Windows 11 Pro"
+        }
+      ],
+      "variations": [
+        {
+          "id": 374497701560,
+          "price": 899999.00,
+          "available_quantity": 2,
+          "attribute_combinations": [
+            {
+              "name": "Configuración",
+              "value_name": "i5 16GB 512GB SSD"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MLA4456789012",
+      "title": "Auriculares Sony WH-1000XM5 Bluetooth Cancelación de Ruido",
+      "description": "Auriculares inalámbricos premium con la mejor cancelación de ruido del mercado. Batería de 30 horas, carga rápida y tecnología de audio de alta resolución. Perfectos para viajes y trabajo.",
+      "price": 349999.00,
+      "currency_id": "ARS",
+      "condition": "new",
+      "status": "active",
+      "thumbnail": "https://http2.mlstatic.com/D_NQ_NP_2X_98765-MLA6543210_042024-F.webp",
+      "permalink": "https://articulo.mercadolibre.com.ar/MLA-4456789012-auriculares-sony-wh-1000xm5-_JM",
+      "date_created": "2024-02-10T14:45:00Z",
+      "last_updated": "2024-03-05T10:15:00Z",
+      "pictures": [
+        {
+          "id": "98765-MLA6543210_042024",
+          "url": "https://http2.mlstatic.com/D_NQ_NP_2X_98765-MLA6543210_042024-F.webp",
+          "secure_url": "https://http2.mlstatic.com/D_NQ_NP_2X_98765-MLA6543210_042024-F.webp"
+        },
+        {
+          "id": "98766-MLA6543211_042024",
+          "url": "https://http2.mlstatic.com/D_NQ_NP_2X_98766-MLA6543211_042024-F.webp",
+          "secure_url": "https://http2.mlstatic.com/D_NQ_NP_2X_98766-MLA6543211_042024-F.webp"
+        }
+      ],
+      "attributes": [
+        {
+          "id": "BRAND",
+          "name": "Marca",
+          "value_name": "Sony"
+        },
+        {
+          "id": "MODEL",
+          "name": "Modelo",
+          "value_name": "WH-1000XM5"
+        },
+        {
+          "id": "CONNECTION_TYPE",
+          "name": "Tipo de conexión",
+          "value_name": "Bluetooth"
+        },
+        {
+          "id": "HEADPHONE_TYPE",
+          "name": "Tipo de auricular",
+          "value_name": "Circumaurales"
+        },
+        {
+          "id": "NOISE_CANCELLING",
+          "name": "Cancelación de ruido",
+          "value_name": "Sí"
+        },
+        {
+          "id": "BATTERY_LIFE",
+          "name": "Duración de batería",
+          "value_name": "30 horas"
+        },
+        {
+          "id": "MICROPHONE",
+          "name": "Micrófono",
+          "value_name": "Sí"
+        }
+      ],
+      "variations": [
+        {
+          "id": 474497701561,
+          "price": 349999.00,
+          "available_quantity": 8,
+          "attribute_combinations": [
+            {
+              "name": "Color",
+              "value_name": "Negro"
+            }
+          ]
+        },
+        {
+          "id": 474497701562,
+          "price": 349999.00,
+          "available_quantity": 5,
+          "attribute_combinations": [
+            {
+              "name": "Color",
+              "value_name": "Plata"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MLA5567890123",
+      "title": "Remera Adidas Originals Trefoil Algodón Premium",
+      "description": "Remera clásica de Adidas Originals con el icónico logo Trefoil. Confeccionada en algodón 100% premium para máxima comodidad. Diseño atemporal que combina con cualquier outfit casual.",
+      "price": 25999.00,
+      "currency_id": "ARS",
+      "condition": "new",
+      "status": "active",
+      "thumbnail": "https://http2.mlstatic.com/D_NQ_NP_2X_11111-MLA7654321_052024-F.webp",
+      "permalink": "https://articulo.mercadolibre.com.ar/MLA-5567890123-remera-adidas-originals-trefoil-_JM",
+      "date_created": "2024-01-05T16:20:00Z",
+      "last_updated": "2024-02-28T12:10:00Z",
+      "pictures": [
+        {
+          "id": "11111-MLA7654321_052024",
+          "url": "https://http2.mlstatic.com/D_NQ_NP_2X_11111-MLA7654321_052024-F.webp",
+          "secure_url": "https://http2.mlstatic.com/D_NQ_NP_2X_11111-MLA7654321_052024-F.webp"
+        }
+      ],
+      "attributes": [
+        {
+          "id": "BRAND",
+          "name": "Marca",
+          "value_name": "Adidas"
+        },
+        {
+          "id": "GENDER",
+          "name": "Género",
+          "value_name": "Unisex"
+        },
+        {
+          "id": "CLOTHING_TYPE",
+          "name": "Tipo de prenda",
+          "value_name": "Remera"
+        },
+        {
+          "id": "MATERIAL",
+          "name": "Material",
+          "value_name": "Algodón"
+        },
+        {
+          "id": "SLEEVE_LENGTH",
+          "name": "Largo de manga",
+          "value_name": "Manga corta"
+        },
+        {
+          "id": "FIT",
+          "name": "Calce",
+          "value_name": "Regular"
+        }
+      ],
+      "variations": [
+        {
+          "id": 574497701563,
+          "price": 25999.00,
+          "available_quantity": 10,
+          "attribute_combinations": [
+            {
+              "name": "Color",
+              "value_name": "Negro"
+            },
+            {
+              "name": "Talle",
+              "value_name": "M"
+            }
+          ]
+        },
+        {
+          "id": 574497701564,
+          "price": 25999.00,
+          "available_quantity": 8,
+          "attribute_combinations": [
+            {
+              "name": "Color",
+              "value_name": "Negro"
+            },
+            {
+              "name": "Talle",
+              "value_name": "L"
+            }
+          ]
+        },
+        {
+          "id": 574497701565,
+          "price": 25999.00,
+          "available_quantity": 12,
+          "attribute_combinations": [
+            {
+              "name": "Color",
+              "value_name": "Blanco"
+            },
+            {
+              "name": "Talle",
+              "value_name": "M"
+            }
+          ]
+        },
+        {
+          "id": 574497701566,
+          "price": 25999.00,
+          "available_quantity": 6,
+          "attribute_combinations": [
+            {
+              "name": "Color",
+              "value_name": "Blanco"
+            },
+            {
+              "name": "Talle",
+              "value_name": "L"
+            }
+          ]
+        },
+        {
+          "id": 574497701567,
+          "price": 25999.00,
+          "available_quantity": 4,
+          "attribute_combinations": [
+            {
+              "name": "Color",
+              "value_name": "Gris"
+            },
+            {
+              "name": "Talle",
+              "value_name": "XL"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

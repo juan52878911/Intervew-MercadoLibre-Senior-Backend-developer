@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">item-detail-api</a> &gt; <a href="index.source.html" class="el_package">com.ecommerce.catalog.infrastructure.web</a> &gt; <span class="el_source">ProductController.java</span></div><h1>ProductController.java</h1><pre class="source lang-java linenums">package com.ecommerce.catalog.infrastructure.web;
+
+import com.ecommerce.catalog.application.dto.*;
+import com.ecommerce.catalog.application.service.ProductService;
+import com.ecommerce.catalog.infrastructure.web.dto.request.*;
+import jakarta.inject.Inject;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import lombok.extern.slf4j.Slf4j;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+/**
+ * Controlador REST para gestión de productos
+ * Expone endpoints tipo MercadoLibre API
+ */
+@Path(&quot;/api/items&quot;)
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+<span class="fc" id="L25">@Slf4j</span>
+public class ProductController {
+
+    private final ProductService productService;
+
+    @Inject
+<span class="fc" id="L31">    public ProductController(ProductService productService) {</span>
+<span class="fc" id="L32">        this.productService = productService;</span>
+<span class="fc" id="L33">    }</span>
+
+    // ================================
+    // CREATE ENDPOINTS
+    // ================================
+
+    @POST
+    public Response createProduct(@Valid CreateProductRequestDto request) {
+<span class="fc" id="L41">        log.info(&quot;POST /api/items - Creando producto: {}&quot;, request.getTitle());</span>
+
+<span class="fc" id="L43">        ProductDto product = productService.createProduct(request);</span>
+
+<span class="fc" id="L45">        return Response.status(Response.Status.CREATED)</span>
+<span class="fc" id="L46">                .entity(product)</span>
+<span class="fc" id="L47">                .build();</span>
+    }
+
+    @POST
+    @Path(&quot;/batch&quot;)
+    public Response createProductsBatch(@Valid List&lt;CreateProductRequestDto&gt; requests) {
+<span class="fc" id="L53">        log.info(&quot;POST /api/items/batch - Creando {} productos&quot;, requests.size());</span>
+
+<span class="fc" id="L55">        List&lt;ProductDto&gt; products = productService.createProducts(requests);</span>
+
+<span class="fc" id="L57">        return Response.status(Response.Status.CREATED)</span>
+<span class="fc" id="L58">                .entity(products)</span>
+<span class="fc" id="L59">                .build();</span>
+    }
+
+    // ================================
+    // READ ENDPOINTS
+    // ================================
+
+    @GET
+    @Path(&quot;/{id}&quot;)
+    public Response getProductById(@PathParam(&quot;id&quot;) String id) {
+<span class="fc" id="L69">        log.debug(&quot;GET /api/items/{} - Obteniendo producto&quot;, id);</span>
+
+<span class="fc" id="L71">        ProductDto product = productService.getProductById(id);</span>
+
+<span class="fc" id="L73">        return Response.ok(product).build();</span>
+    }
+
+    @GET
+    public Response getAllProducts(
+            @QueryParam(&quot;offset&quot;) @DefaultValue(&quot;0&quot;) @Min(0) int offset,
+            @QueryParam(&quot;limit&quot;) @DefaultValue(&quot;50&quot;) @Min(1) @Max(200) int limit,
+            @QueryParam(&quot;sort&quot;) String sortBy) {
+<span class="fc" id="L81">        log.debug(&quot;GET /api/items - Offset: {}, Limit: {}, Sort: {}&quot;, offset, limit, sortBy);</span>
+
+<span class="fc" id="L83">        ProductListResponseDto response = productService.getAllProducts(offset, limit, sortBy);</span>
+
+<span class="fc" id="L85">        return Response.ok(response).build();</span>
+    }
+
+    @GET
+    @Path(&quot;/search&quot;)
+    public Response searchProducts(
+            @QueryParam(&quot;q&quot;) String query,
+            @QueryParam(&quot;brand&quot;) String brand,
+            @QueryParam(&quot;price_min&quot;) BigDecimal minPrice,
+            @QueryParam(&quot;price_max&quot;) BigDecimal maxPrice,
+            @QueryParam(&quot;condition&quot;) String condition,
+            @QueryParam(&quot;offset&quot;) @DefaultValue(&quot;0&quot;) @Min(0) int offset,
+            @QueryParam(&quot;limit&quot;) @DefaultValue(&quot;50&quot;) @Min(1) @Max(200) int limit,
+            @QueryParam(&quot;sort&quot;) String sortBy) {
+
+<span class="fc" id="L100">        log.info(&quot;GET /api/items/search - Query: '{}', Brand: '{}', Price: {}-{}&quot;,</span>
+                query, brand, minPrice, maxPrice);
+
+<span class="fc" id="L103">        ProductListResponseDto response = productService.advancedSearch(</span>
+                query, brand, minPrice, maxPrice, condition, offset, limit, sortBy);
+
+<span class="fc" id="L106">        return Response.ok(response).build();</span>
+    }
+
+    @GET
+    @Path(&quot;/search/title&quot;)
+    public Response searchByTitle(@QueryParam(&quot;title&quot;) String title) {
+<span class="fc" id="L112">        log.debug(&quot;GET /api/items/search/title - Title: '{}'&quot;, title);</span>
+
+<span class="fc" id="L114">        List&lt;ProductDto&gt; products = productService.searchByTitle(title);</span>
+
+<span class="fc" id="L116">        return Response.ok(products).build();</span>
+    }
+
+    @GET
+    @Path(&quot;/search/brand/{brand}&quot;)
+    public Response searchByBrand(@PathParam(&quot;brand&quot;) String brand) {
+<span class="fc" id="L122">        log.debug(&quot;GET /api/items/search/brand/{} - Buscando productos&quot;, brand);</span>
+
+<span class="fc" id="L124">        List&lt;ProductDto&gt; products = productService.searchByBrand(brand);</span>
+
+<span class="fc" id="L126">        return Response.ok(products).build();</span>
+    }
+
+    @GET
+    @Path(&quot;/search/price&quot;)
+    public Response searchByPriceRange(
+            @QueryParam(&quot;min&quot;) BigDecimal minPrice,
+            @QueryParam(&quot;max&quot;) BigDecimal maxPrice,
+            @QueryParam(&quot;currency&quot;) String currency) {
+
+<span class="fc" id="L136">        log.debug(&quot;GET /api/items/search/price - Range: {}-{} {}&quot;, minPrice, maxPrice, currency);</span>
+
+<span class="fc" id="L138">        List&lt;ProductDto&gt; products = productService.searchByPriceRange(minPrice, maxPrice, currency);</span>
+
+<span class="fc" id="L140">        return Response.ok(products).build();</span>
+    }
+
+    // ================================
+    // UPDATE ENDPOINTS
+    // ================================
+
+    @PUT
+    @Path(&quot;/{id}&quot;)
+    public Response updateProduct(
+            @PathParam(&quot;id&quot;) String id,
+            @Valid UpdateProductRequestDto request) {
+
+<span class="fc" id="L153">        log.info(&quot;PUT /api/items/{} - Actualizando producto&quot;, id);</span>
+
+<span class="fc" id="L155">        ProductDto product = productService.updateProduct(id, request);</span>
+
+<span class="fc" id="L157">        return Response.ok(product).build();</span>
+    }
+
+    @PUT
+    @Path(&quot;/{id}/price&quot;)
+    public Response updatePrice(
+            @PathParam(&quot;id&quot;) String id,
+            @QueryParam(&quot;price&quot;) BigDecimal newPrice,
+            @QueryParam(&quot;reason&quot;) @DefaultValue(&quot;Actualización manual&quot;) String reason) {
+
+<span class="fc" id="L167">        log.info(&quot;PUT /api/items/{}/price - Nuevo precio: {}&quot;, id, newPrice);</span>
+
+<span class="fc" id="L169">        ProductDto product = productService.updatePrice(id, newPrice, reason);</span>
+
+<span class="fc" id="L171">        return Response.ok(product).build();</span>
+    }
+
+    @PUT
+    @Path(&quot;/{id}/status&quot;)
+    public Response updateStatus(
+            @PathParam(&quot;id&quot;) String id,
+            @QueryParam(&quot;status&quot;) String newStatus) {
+
+<span class="fc" id="L180">        log.info(&quot;PUT /api/items/{}/status - Nuevo estado: {}&quot;, id, newStatus);</span>
+
+<span class="fc" id="L182">        ProductDto product = productService.updateStatus(id, newStatus);</span>
+
+<span class="fc" id="L184">        return Response.ok(product).build();</span>
+    }
+
+    // ================================
+    // DELETE ENDPOINTS
+    // ================================
+
+    @DELETE
+    @Path(&quot;/{id}&quot;)
+    public Response deleteProduct(@PathParam(&quot;id&quot;) String id) {
+<span class="fc" id="L194">        log.info(&quot;DELETE /api/items/{} - Eliminando producto&quot;, id);</span>
+
+<span class="fc" id="L196">        boolean deleted = productService.deleteProduct(id);</span>
+
+<span class="fc bfc" id="L198" title="All 2 branches covered.">        if (deleted) {</span>
+<span class="fc" id="L199">            return Response.noContent().build();</span>
+        } else {
+<span class="fc" id="L201">            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();</span>
+        }
+    }
+
+    @DELETE
+    @Path(&quot;/batch&quot;)
+    public Response deleteProductsBatch(List&lt;String&gt; productIds) {
+<span class="fc" id="L208">        log.info(&quot;DELETE /api/items/batch - Eliminando {} productos&quot;, productIds.size());</span>
+
+<span class="fc" id="L210">        BatchOperationResultDto result = productService.deleteProducts(productIds);</span>
+
+<span class="fc" id="L212">        return Response.ok(result).build();</span>
+    }
+
+    // ================================
+    // ANALYTICS ENDPOINTS
+    // ================================
+
+    @GET
+    @Path(&quot;/statistics&quot;)
+    public Response getStatistics() {
+<span class="fc" id="L222">        log.debug(&quot;GET /api/items/statistics - Obteniendo estadísticas&quot;);</span>
+
+<span class="fc" id="L224">        ProductStatisticsDto statistics = productService.getStatistics();</span>
+
+<span class="fc" id="L226">        return Response.ok(statistics).build();</span>
+    }
+
+    @GET
+    @Path(&quot;/sort-options&quot;)
+    public Response getSortOptions() {
+<span class="fc" id="L232">        log.debug(&quot;GET /api/items/sort-options - Obteniendo opciones de ordenamiento&quot;);</span>
+
+<span class="fc" id="L234">        List&lt;SortResponseDto&gt; sortOptions = productService.getAvailableSortOptions();</span>
+
+<span class="fc" id="L236">        return Response.ok(sortOptions).build();</span>
+    }
+
+    // ================================
+    // UTILITY ENDPOINTS
+    // ================================
+
+    @GET
+    @Path(&quot;/brands&quot;)
+    public Response getAvailableBrands() {
+<span class="fc" id="L246">        log.debug(&quot;GET /api/items/brands - Obteniendo marcas disponibles&quot;);</span>
+
+<span class="fc" id="L248">        ProductStatisticsDto statistics = productService.getStatistics();</span>
+
+<span class="fc" id="L250">        return Response.ok(statistics.getBrands()).build();</span>
+    }
+
+    @GET
+    @Path(&quot;/categories&quot;)
+    public Response getAvailableCategories() {
+<span class="fc" id="L256">        log.debug(&quot;GET /api/items/categories - Obteniendo categorías disponibles&quot;);</span>
+
+<span class="fc" id="L258">        ProductStatisticsDto statistics = productService.getStatistics();</span>
+
+<span class="fc" id="L260">        return Response.ok(statistics.getCategories()).build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
